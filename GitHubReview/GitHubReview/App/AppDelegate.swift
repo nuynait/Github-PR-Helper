@@ -11,6 +11,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     let authVM = AuthViewModel()
     let prVM = PRViewModel()
 
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return false
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
         observeBadgeCounts()
