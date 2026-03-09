@@ -19,6 +19,12 @@ class PRViewModel: ObservableObject {
     @Published var archivedRepos: Set<String> {
         didSet { saveArchivedRepos() }
     }
+    @Published var repoOrder: [String] {
+        didSet {
+            saveRepoOrder()
+            applyFilters()
+        }
+    }
 
     private var allMyPRs: [PullRequest] = []
     private var allReviewRequests: [PullRequest] = []
@@ -30,13 +36,26 @@ class PRViewModel: ObservableObject {
     private var hasLoadedOnce = false
 
     private static let archivedReposKey = "archivedRepos"
+    private static let repoOrderKey = "repoOrder"
 
     var myPRCount: Int { myPRs.count }
     var reviewRequestCount: Int { reviewRequests.count }
 
+    /// All visible (non-archived) repos seen across both tabs, in user-defined order.
+    var orderedVisibleRepos: [String] {
+        let allRepoNames = Set(allMyPRs.map(\.repoFullName) + allReviewRequests.map(\.repoFullName))
+        let visible = allRepoNames.subtracting(archivedRepos)
+        // Return repos in the saved order, appending any new ones at the bottom
+        var result = repoOrder.filter { visible.contains($0) }
+        let unsorted = visible.subtracting(Set(result)).sorted()
+        result.append(contentsOf: unsorted)
+        return result
+    }
+
     init() {
-        let saved = UserDefaults.standard.stringArray(forKey: Self.archivedReposKey) ?? []
-        self.archivedRepos = Set(saved)
+        let savedArchived = UserDefaults.standard.stringArray(forKey: Self.archivedReposKey) ?? []
+        self.archivedRepos = Set(savedArchived)
+        self.repoOrder = UserDefaults.standard.stringArray(forKey: Self.repoOrderKey) ?? []
     }
 
     func configure(token: String, username: String) {
@@ -72,6 +91,17 @@ class PRViewModel: ObservableObject {
 
     func unarchiveRepo(_ repoName: String) {
         archivedRepos.remove(repoName)
+        // Append to order if not already tracked
+        if !repoOrder.contains(repoName) {
+            repoOrder.append(repoName)
+        }
+        applyFilters()
+    }
+
+    func moveRepos(from source: IndexSet, to destination: Int) {
+        var ordered = orderedVisibleRepos
+        ordered.move(fromOffsets: source, toOffset: destination)
+        repoOrder = ordered
         applyFilters()
     }
 
@@ -104,6 +134,14 @@ class PRViewModel: ObservableObject {
 
             self.allMyPRs = myPRs
             self.allReviewRequests = reviews
+
+            // Add any new repos to the order list
+            let allRepoNames = Set(myPRs.map(\.repoFullName) + reviews.map(\.repoFullName))
+            let newRepos = allRepoNames.subtracting(Set(repoOrder)).subtracting(archivedRepos).sorted()
+            if !newRepos.isEmpty {
+                repoOrder.append(contentsOf: newRepos)
+            }
+
             applyFilters()
             self.lastUpdated = Date()
         } catch {
@@ -125,11 +163,26 @@ class PRViewModel: ObservableObject {
 
     private func groupByRepo(_ prs: [PullRequest]) -> [PRGroup] {
         let grouped = Dictionary(grouping: prs) { $0.repoFullName }
-        return grouped.map { PRGroup(id: $0.key, repoName: $0.key, prs: $0.value) }
-            .sorted { $0.repoName < $1.repoName }
+        let groups = grouped.map { PRGroup(id: $0.key, repoName: $0.key, prs: $0.value) }
+
+        // Sort by user-defined order; unknown repos go to the end alphabetically
+        return groups.sorted { a, b in
+            let indexA = repoOrder.firstIndex(of: a.repoName)
+            let indexB = repoOrder.firstIndex(of: b.repoName)
+            switch (indexA, indexB) {
+            case let (ia?, ib?): return ia < ib
+            case (_?, nil): return true
+            case (nil, _?): return false
+            case (nil, nil): return a.repoName < b.repoName
+            }
+        }
     }
 
     private func saveArchivedRepos() {
         UserDefaults.standard.set(Array(archivedRepos), forKey: Self.archivedReposKey)
+    }
+
+    private func saveRepoOrder() {
+        UserDefaults.standard.set(repoOrder, forKey: Self.repoOrderKey)
     }
 }
