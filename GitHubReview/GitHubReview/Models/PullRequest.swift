@@ -5,7 +5,7 @@ struct SearchResponse: Codable {
     let items: [PullRequest]
 }
 
-struct PullRequest: Codable, Identifiable {
+struct PullRequest: Codable, Identifiable, Equatable {
     let id: Int
     let number: Int
     let title: String
@@ -40,12 +40,12 @@ struct PullRequest: Codable, Identifiable {
     }
 }
 
-struct PRUser: Codable, Identifiable {
+struct PRUser: Codable, Identifiable, Equatable {
     let id: Int
     let login: String
     let avatarUrl: String
 }
 
-struct PRLinks: Codable {
+struct PRLinks: Codable, Equatable {
     let htmlUrl: String?
 }

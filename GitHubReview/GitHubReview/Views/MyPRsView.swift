@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MyPRsView: View {
     @EnvironmentObject var prVM: PRViewModel
+    @State private var expandedRepos: Set<String> = []
 
     var body: some View {
         Group {
@@ -14,29 +15,41 @@ struct MyPRsView: View {
             } else {
                 List {
                     ForEach(prVM.myPRGroups) { group in
-                        Section {
-                            ForEach(group.prs) { pr in
-                                PRRowView(pr: pr)
-                            }
-                        } header: {
-                            HStack {
-                                Image(systemName: "folder")
-                                    .font(.caption2)
-                                Text(group.repoName)
-                                    .font(.caption.bold())
-                                Spacer()
-                                Text("\(group.prs.count)")
-                                    .font(.caption2.monospaced())
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 1)
-                                    .background(.blue.opacity(0.15))
-                                    .clipShape(Capsule())
-                            }
-                        }
+                        RepoSectionView(
+                            group: group,
+                            badgeColor: .blue,
+                            isExpanded: binding(for: group.id),
+                            onArchive: { prVM.archiveRepo(group.repoName) }
+                        )
                     }
                 }
-                .listStyle(.sidebar)
+                .listStyle(.plain)
+                .onAppear { expandAll() }
+                .onChange(of: prVM.myPRGroups) { _, groups in
+                    for group in groups where !expandedRepos.contains(group.id) {
+                        expandedRepos.insert(group.id)
+                    }
+                }
             }
+        }
+    }
+
+    private func binding(for id: String) -> Binding<Bool> {
+        Binding(
+            get: { expandedRepos.contains(id) },
+            set: { isExpanded in
+                if isExpanded {
+                    expandedRepos.insert(id)
+                } else {
+                    expandedRepos.remove(id)
+                }
+            }
+        )
+    }
+
+    private func expandAll() {
+        for group in prVM.myPRGroups {
+            expandedRepos.insert(group.id)
         }
     }
 }

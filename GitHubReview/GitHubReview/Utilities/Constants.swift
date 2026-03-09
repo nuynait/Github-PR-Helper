@@ -17,7 +17,7 @@ enum Constants {
     static let gitHubAccessTokenURL = "https://github.com/login/oauth/access_token"
     static let gitHubDeviceActivationURL = "https://github.com/login/device"
 
-    static let oauthScopes = "repo"
+    static let oauthScopes = "repo read:org"
 
     static let pollInterval: TimeInterval = 120 // 2 minutes
     static let keychainService = "com.github-review.token"

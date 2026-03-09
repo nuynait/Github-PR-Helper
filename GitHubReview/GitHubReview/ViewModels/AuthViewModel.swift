@@ -66,6 +66,27 @@ class AuthViewModel: ObservableObject {
         }
     }
 
+    func signInWithPAT(_ pat: String) {
+        error = nil
+        let trimmed = pat.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            error = "Please enter a token."
+            return
+        }
+
+        Task {
+            let service = GitHubService(token: trimmed)
+            do {
+                let user = try await service.fetchCurrentUser()
+                try KeychainService.save(token: trimmed)
+                self.isAuthenticated = true
+                self.currentUser = user
+            } catch {
+                self.error = "Invalid token: \(error.localizedDescription)"
+            }
+        }
+    }
+
     func signOut() {
         pollTask?.cancel()
         KeychainService.deleteToken()

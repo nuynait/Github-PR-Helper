@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct PRGroup: Identifiable {
+struct PRGroup: Identifiable, Equatable {
     let id: String // repo full name
     let repoName: String
     let prs: [PullRequest]
@@ -16,13 +16,25 @@ class PRViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: String?
     @Published var lastUpdated: Date?
+    @Published var archivedRepos: Set<String> {
+        didSet { saveArchivedRepos() }
+    }
 
+    private var allMyPRs: [PullRequest] = []
+    private var allReviewRequests: [PullRequest] = []
     private var service: GitHubService?
     private var username: String?
     private var pollTask: Task<Void, Never>?
 
+    private static let archivedReposKey = "archivedRepos"
+
     var myPRCount: Int { myPRs.count }
     var reviewRequestCount: Int { reviewRequests.count }
+
+    init() {
+        let saved = UserDefaults.standard.stringArray(forKey: Self.archivedReposKey) ?? []
+        self.archivedRepos = Set(saved)
+    }
 
     func configure(token: String, username: String) {
         self.service = GitHubService(token: token)
@@ -50,6 +62,16 @@ class PRViewModel: ObservableObject {
         pollTask?.cancel()
     }
 
+    func archiveRepo(_ repoName: String) {
+        archivedRepos.insert(repoName)
+        applyFilters()
+    }
+
+    func unarchiveRepo(_ repoName: String) {
+        archivedRepos.remove(repoName)
+        applyFilters()
+    }
+
     private func fetchAll() async {
         guard let service, let username else { return }
 
@@ -62,10 +84,9 @@ class PRViewModel: ObservableObject {
 
             let (myPRs, reviews) = try await (myPRsResult, reviewResult)
 
-            self.myPRs = myPRs
-            self.reviewRequests = reviews
-            self.myPRGroups = groupByRepo(myPRs)
-            self.reviewGroups = groupByRepo(reviews)
+            self.allMyPRs = myPRs
+            self.allReviewRequests = reviews
+            applyFilters()
             self.lastUpdated = Date()
         } catch {
             self.error = error.localizedDescription
@@ -74,9 +95,23 @@ class PRViewModel: ObservableObject {
         isLoading = false
     }
 
+    private func applyFilters() {
+        let filteredMyPRs = allMyPRs.filter { !archivedRepos.contains($0.repoFullName) }
+        let filteredReviews = allReviewRequests.filter { !archivedRepos.contains($0.repoFullName) }
+
+        self.myPRs = filteredMyPRs
+        self.reviewRequests = filteredReviews
+        self.myPRGroups = groupByRepo(filteredMyPRs)
+        self.reviewGroups = groupByRepo(filteredReviews)
+    }
+
     private func groupByRepo(_ prs: [PullRequest]) -> [PRGroup] {
         let grouped = Dictionary(grouping: prs) { $0.repoFullName }
         return grouped.map { PRGroup(id: $0.key, repoName: $0.key, prs: $0.value) }
             .sorted { $0.repoName < $1.repoName }
+    }
+
+    private func saveArchivedRepos() {
+        UserDefaults.standard.set(Array(archivedRepos), forKey: Self.archivedReposKey)
     }
 }
