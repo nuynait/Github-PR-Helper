@@ -1,9 +1,10 @@
 import AppKit
 import SwiftUI
 import Combine
+import UserNotifications
 
 @MainActor
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     private var statusItem: NSStatusItem!
     private var cancellables = Set<AnyCancellable>()
 
@@ -13,6 +14,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
         observeBadgeCounts()
+
+        let center = UNUserNotificationCenter.current()
+        center.delegate = self
+        center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if let error {
+                print("Notification permission error: \(error)")
+            }
+            print("Notification permission granted: \(granted)")
+        }
+    }
+
+    // Show notifications even when app is in foreground
+    nonisolated func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound])
     }
 
     private func setupStatusItem() {
@@ -29,7 +48,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let window = NSApp.windows.first(where: { $0.title.contains("GitHub Review") || $0.isKeyWindow }) {
             window.makeKeyAndOrderFront(nil)
         } else {
-            // Open a new window if none exists
             for window in NSApp.windows {
                 if window.level == .normal {
                     window.makeKeyAndOrderFront(nil)
@@ -54,7 +72,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func updateButton(_ button: NSStatusBarButton, reviewCount: Int, myPRCount: Int) {
         let attributed = NSMutableAttributedString()
 
-        // GitHub-style icon using SF Symbol
         let iconAttachment = NSTextAttachment()
         let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
         if let icon = NSImage(systemSymbolName: "arrow.triangle.pull", accessibilityDescription: "GitHub Review")?

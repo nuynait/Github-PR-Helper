@@ -25,6 +25,9 @@ class PRViewModel: ObservableObject {
     private var service: GitHubService?
     private var username: String?
     private var pollTask: Task<Void, Never>?
+    private var knownMyPRIds: Set<Int> = []
+    private var knownReviewIds: Set<Int> = []
+    private var hasLoadedOnce = false
 
     private static let archivedReposKey = "archivedRepos"
 
@@ -83,6 +86,21 @@ class PRViewModel: ObservableObject {
             async let reviewResult = service.fetchReviewRequests(username: username)
 
             let (myPRs, reviews) = try await (myPRsResult, reviewResult)
+
+            if hasLoadedOnce {
+                let newMyPRIds = Set(myPRs.map(\.id)).subtracting(knownMyPRIds)
+                let newReviewIds = Set(reviews.map(\.id)).subtracting(knownReviewIds)
+
+                let newMyPRs = myPRs.filter { newMyPRIds.contains($0.id) && !archivedRepos.contains($0.repoFullName) }
+                let newReviews = reviews.filter { newReviewIds.contains($0.id) && !archivedRepos.contains($0.repoFullName) }
+
+                NotificationService.sendNewPRNotification(prs: newMyPRs, isReviewRequest: false)
+                NotificationService.sendNewPRNotification(prs: newReviews, isReviewRequest: true)
+            }
+
+            knownMyPRIds = Set(myPRs.map(\.id))
+            knownReviewIds = Set(reviews.map(\.id))
+            hasLoadedOnce = true
 
             self.allMyPRs = myPRs
             self.allReviewRequests = reviews

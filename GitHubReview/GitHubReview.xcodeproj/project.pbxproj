@@ -26,6 +26,8 @@
 		A10017 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B10017; };
 		A10018 /* ArchivedReposView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10021; };
 		A10019 /* RepoSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10022; };
+		A10020 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10023; };
+		A10021 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10024; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +51,8 @@
 		B10017 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B10021 /* ArchivedReposView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchivedReposView.swift; sourceTree = "<group>"; };
 		B10022 /* RepoSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepoSectionView.swift; sourceTree = "<group>"; };
+		B10023 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		B10024 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B10018 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B10019 /* GitHubReview.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GitHubReview.entitlements; sourceTree = "<group>"; };
 		C10001 /* GitHubReview.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GitHubReview.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -128,6 +132,7 @@
 				B10007 /* PRRowView.swift */,
 				B10021 /* ArchivedReposView.swift */,
 				B10022 /* RepoSectionView.swift */,
+				B10024 /* SettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -138,6 +143,7 @@
 				B10010 /* GitHubService.swift */,
 				B10011 /* KeychainService.swift */,
 				B10012 /* AuthService.swift */,
+				B10023 /* NotificationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -245,6 +251,8 @@
 				A10016 /* DeviceFlowModels.swift in Sources */,
 				A10018 /* ArchivedReposView.swift in Sources */,
 				A10019 /* RepoSectionView.swift in Sources */,
+				A10020 /* NotificationService.swift in Sources */,
+				A10021 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

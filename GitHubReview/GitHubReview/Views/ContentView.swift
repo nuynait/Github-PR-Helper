@@ -3,7 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var authVM: AuthViewModel
     @EnvironmentObject var prVM: PRViewModel
-    @State private var showArchivedRepos = false
+    @State private var showSettings = false
 
     var body: some View {
         Group {
@@ -52,8 +52,8 @@ struct ContentView: View {
                         Text("Signed in as \(user.login)")
                         Divider()
                     }
-                    Button("Archived Repos\(prVM.archivedRepos.isEmpty ? "" : " (\(prVM.archivedRepos.count))")") {
-                        showArchivedRepos = true
+                    Button("Settings...") {
+                        showSettings = true
                     }
                     Divider()
                     Button("Sign Out") {
@@ -75,8 +75,8 @@ struct ContentView: View {
                 prVM.configure(token: token, username: user.login)
             }
         }
-        .sheet(isPresented: $showArchivedRepos) {
-            ArchivedReposView()
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
                 .environmentObject(prVM)
         }
     }
