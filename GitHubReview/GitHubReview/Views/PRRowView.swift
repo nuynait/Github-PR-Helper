@@ -55,6 +55,16 @@ struct PRRowView: View {
                                 .clipShape(Capsule())
                                 .foregroundStyle(state == "merged" ? .purple : .red)
                         }
+
+                        if let reviewStatus = prVM.reviewStatuses[pr.id] {
+                            Text(reviewStatus == .approved ? "Approved" : "Changes Requested")
+                                .font(.caption2.bold())
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(reviewStatus == .approved ? Color.green.opacity(0.2) : Color.orange.opacity(0.2))
+                                .clipShape(Capsule())
+                                .foregroundStyle(reviewStatus == .approved ? .green : .orange)
+                        }
                     }
 
                     HStack(spacing: 4) {

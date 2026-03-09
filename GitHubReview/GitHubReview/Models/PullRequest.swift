@@ -54,3 +54,19 @@ struct PRStateResponse: Codable {
     let state: String
     let mergedAt: String?
 }
+
+struct PRReview: Codable {
+    let id: Int
+    let user: PRUser
+    let state: String // APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED, PENDING
+    let submittedAt: Date?
+}
+
+struct PRDetailResponse: Codable {
+    let requestedReviewers: [PRUser]
+}
+
+enum PRReviewStatus: String, Codable, Equatable {
+    case approved
+    case changesRequested
+}

@@ -21,6 +21,7 @@ class PRViewModel: ObservableObject {
     @Published var starredAllGroups: [PRGroup] = []
     @Published var starredMyPRGroups: [PRGroup] = []
     @Published var starredReviewGroups: [PRGroup] = []
+    @Published var reviewStatuses: [Int: PRReviewStatus] = [:]
     @Published var isLoading = false
     @Published var error: String?
     @Published var lastUpdated: Date?
@@ -316,11 +317,72 @@ class PRViewModel: ObservableObject {
 
             applyFilters()
             self.lastUpdated = Date()
+
+            // Fetch review statuses for all visible PRs
+            await fetchReviewStatuses(prs: myPRs + reviews, service: service)
         } catch {
             self.error = error.localizedDescription
         }
 
         isLoading = false
+    }
+
+    private func fetchReviewStatuses(prs: [PullRequest], service: GitHubService) async {
+        await withTaskGroup(of: (Int, PRReviewStatus?).self) { group in
+            for pr in prs {
+                group.addTask {
+                    let status = await self.computeReviewStatus(pr: pr, service: service)
+                    return (pr.id, status)
+                }
+            }
+
+            var statuses: [Int: PRReviewStatus] = [:]
+            for await (id, status) in group {
+                if let status {
+                    statuses[id] = status
+                }
+            }
+            self.reviewStatuses = statuses
+        }
+    }
+
+    private func computeReviewStatus(pr: PullRequest, service: GitHubService) async -> PRReviewStatus? {
+        async let reviewsResult = service.fetchReviews(repo: pr.repoFullName, number: pr.number)
+        async let detailResult = service.fetchPRDetail(repo: pr.repoFullName, number: pr.number)
+
+        let reviews = await reviewsResult
+        let detail = await detailResult
+
+        // Reviewers who have been (re-)requested and haven't submitted a new review
+        let pendingReviewerLogins = Set(detail?.requestedReviewers.map(\.login) ?? [])
+
+        // Group reviews by reviewer, keep only APPROVED or CHANGES_REQUESTED
+        var latestByReviewer: [String: PRReview] = [:]
+        for review in reviews {
+            let state = review.state
+            guard state == "APPROVED" || state == "CHANGES_REQUESTED" else { continue }
+
+            if let existing = latestByReviewer[review.user.login] {
+                if let newDate = review.submittedAt, let existingDate = existing.submittedAt, newDate > existingDate {
+                    latestByReviewer[review.user.login] = review
+                }
+            } else {
+                latestByReviewer[review.user.login] = review
+            }
+        }
+
+        // Exclude reviewers who have been re-requested
+        let effectiveReviews = latestByReviewer.filter { !pendingReviewerLogins.contains($0.key) }
+
+        let hasChangesRequested = effectiveReviews.values.contains { $0.state == "CHANGES_REQUESTED" }
+        let hasApproved = effectiveReviews.values.contains { $0.state == "APPROVED" }
+
+        if hasChangesRequested {
+            return .changesRequested
+        } else if hasApproved {
+            return .approved
+        }
+        return nil
     }
 
     private func detectEvents(

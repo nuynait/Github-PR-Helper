@@ -48,6 +48,36 @@ actor GitHubService {
         }
     }
 
+    /// Fetch reviews for a PR.
+    func fetchReviews(repo: String, number: Int) async -> [PRReview] {
+        let request = makeRequest(path: "/repos/\(repo)/pulls/\(number)/reviews?per_page=100")
+        do {
+            let (data, response) = try await session.data(for: request)
+            try validateResponse(response)
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            decoder.dateDecodingStrategy = .iso8601
+            return try decoder.decode([PRReview].self, from: data)
+        } catch {
+            return []
+        }
+    }
+
+    /// Fetch PR detail to get requested_reviewers.
+    func fetchPRDetail(repo: String, number: Int) async -> PRDetailResponse? {
+        let request = makeRequest(path: "/repos/\(repo)/pulls/\(number)")
+        do {
+            let (data, response) = try await session.data(for: request)
+            try validateResponse(response)
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            decoder.dateDecodingStrategy = .iso8601
+            return try decoder.decode(PRDetailResponse.self, from: data)
+        } catch {
+            return nil
+        }
+    }
+
     private func searchIssues(query: String) async throws -> [PullRequest] {
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
         let request = makeRequest(path: "/search/issues?q=\(encodedQuery)&per_page=100&sort=updated&order=desc")
