@@ -45,6 +45,7 @@ Configure repository ordering, archive repos you don't need, and manage notifica
 ### Additional Features
 
 - **Star/Pin PRs** — Star important PRs to pin them to the top of their repo group
+- **Review status badges** — Green "Approved" and orange "Changes Requested" indicators, with correct handling of re-requested reviews
 - **Merged/Closed badges** — Purple "Merged" and red "Closed" indicators on resolved PRs
 - **Draft badge** — Visual indicator for draft PRs
 - **Drag-and-drop repo ordering** — Customize the display order of repositories
@@ -58,7 +59,9 @@ Configure repository ordering, archive repos you don't need, and manage notifica
 1. Go to the [Releases](https://github.com/nuynait/Github-PR-Helper/releases) page
 2. Download the latest `GitHubReview-vX.X.X.dmg`
 3. Open the DMG and drag **GitHubReview** to **Applications**
-4. On first launch, right-click the app > **Open** (required for unsigned apps)
+4. Open the app — macOS will show a warning that it's from an unidentified developer. Click **Done** to dismiss
+5. Go to **System Settings** > **Privacy & Security**, scroll down to the Security section, and click **Open Anyway** next to the message about GitHubReview being blocked
+6. Confirm by clicking **Open** in the follow-up dialog
 
 ## Authentication
 
