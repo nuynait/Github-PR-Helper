@@ -120,6 +120,20 @@ struct SettingsView: View {
             .padding(10)
             .background(.fill.quinary)
             .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Toggle(isOn: $prVM.showZeroCount) {
+                HStack {
+                    Image(systemName: "0.circle")
+                        .foregroundStyle(.secondary)
+
+                    Text("Show 0 when there are no PRs for a category")
+                        .font(.subheadline)
+                }
+            }
+            .toggleStyle(.switch)
+            .padding(10)
+            .background(.fill.quinary)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
     }
 

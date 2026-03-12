@@ -68,10 +68,15 @@ class PRViewModel: ObservableObject {
         didSet { UserDefaults.standard.set(excludeDraftsFromMenuBar, forKey: Self.excludeDraftsKey) }
     }
 
+    @Published var showZeroCount: Bool {
+        didSet { UserDefaults.standard.set(showZeroCount, forKey: Self.showZeroCountKey) }
+    }
+
     private static let archivedReposKey = "archivedRepos"
     private static let repoOrderKey = "repoOrder"
     private static let showNewIndicatorKey = "showNewIndicator"
     private static let excludeDraftsKey = "excludeDraftsFromMenuBar"
+    private static let showZeroCountKey = "showZeroCount"
 
     var myPRCount: Int { myPRs.count }
     var reviewRequestCount: Int { reviewRequests.count }
@@ -102,6 +107,7 @@ class PRViewModel: ObservableObject {
         self.repoOrder = UserDefaults.standard.stringArray(forKey: Self.repoOrderKey) ?? []
         self.showNewIndicator = UserDefaults.standard.object(forKey: Self.showNewIndicatorKey) as? Bool ?? true
         self.excludeDraftsFromMenuBar = UserDefaults.standard.bool(forKey: Self.excludeDraftsKey)
+        self.showZeroCount = UserDefaults.standard.bool(forKey: Self.showZeroCountKey)
         self.prMetadata = PRMetadataStore.load()
         self.repoMetadata = RepoMetadataStore.load()
         self.storedStarredPRs = PRMetadataStore.loadStarredPRs()

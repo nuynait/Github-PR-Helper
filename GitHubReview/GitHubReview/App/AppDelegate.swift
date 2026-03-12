@@ -65,15 +65,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     private func observeBadgeCounts() {
         prVM.$reviewRequests
             .combineLatest(prVM.$myPRs, prVM.$excludeDraftsFromMenuBar)
+            .combineLatest(prVM.$showZeroCount)
             .receive(on: RunLoop.main)
-            .sink { [weak self] _, _, _ in
+            .sink { [weak self] _, _ in
                 guard let self, let button = self.statusItem.button else { return }
-                self.updateButton(button, reviewCount: self.prVM.menuBarReviewCount, myPRCount: self.prVM.menuBarMyPRCount)
+                self.updateButton(button, reviewCount: self.prVM.menuBarReviewCount, myPRCount: self.prVM.menuBarMyPRCount, showZero: self.prVM.showZeroCount)
             }
             .store(in: &cancellables)
     }
 
-    private func updateButton(_ button: NSStatusBarButton, reviewCount: Int, myPRCount: Int) {
+    private func updateButton(_ button: NSStatusBarButton, reviewCount: Int, myPRCount: Int, showZero: Bool = false) {
         let attributed = NSMutableAttributedString()
 
         let iconAttachment = NSTextAttachment()
@@ -84,7 +85,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
         attributed.append(NSAttributedString(attachment: iconAttachment))
 
-        if reviewCount > 0 {
+        if reviewCount > 0 || showZero {
             attributed.append(NSAttributedString(string: " "))
             let reviewBadge = NSAttributedString(
                 string: "\(reviewCount)",
@@ -96,7 +97,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             attributed.append(reviewBadge)
         }
 
-        if myPRCount > 0 {
+        if myPRCount > 0 || showZero {
             attributed.append(NSAttributedString(string: " "))
             let myPRBadge = NSAttributedString(
                 string: "\(myPRCount)",
